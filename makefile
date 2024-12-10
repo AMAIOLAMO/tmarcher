@@ -1,6 +1,7 @@
 BUILD_DIR=build
+LIB_DIR=lib
 OPTIONS=-Wall -Wextra -O3
-INCLUDES=-Ipublic
+INCLUDES=-Ipublic -Ilib/cxvec
 
 .PHONY: clean
 

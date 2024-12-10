@@ -1,0 +1,3 @@
+[submodule "lib/cxvec"]
+	path = lib/cxvec
+	url = https://github.com/AMAIOLAMO/cxvec.git

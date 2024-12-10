@@ -1,3 +1,4 @@
 CompileFlags:
   Add:
     - "-Ipublic"
+    - "-Ilib/cxvec"

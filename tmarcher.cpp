@@ -9,7 +9,7 @@
 
 // TODO: replace this with a submodule from git instead of copying versions in a manual way
 #define CXVEC_IMPL_ONCE
-#include "public/cxvec.h"
+#include <cxvec.h>
 
 #include <camera.h>
 #include <term_util.h>
