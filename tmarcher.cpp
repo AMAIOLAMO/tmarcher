@@ -103,6 +103,7 @@ Vec3f normal_from_pt_approx(SDFable *sdfable_ptr, Vec3f pt) {
     return Vec3f_norm(normal);
 }
 
+
 Vec3f normal_from_pt_backtrack(Vec3f rd, SDFable *sdfable_ptr, Vec3f pt) {
     Vec2f e = Vec2f{.001, 0.};
 
@@ -223,8 +224,7 @@ void render_quadrant_thread(int start_y, int end_y, RenderInfo *render_info_ptr)
             uv.y = 1.0 - uv.y;
 
             // make center and scale to -1 ~ 1
-            uv.x -= .5;
-            uv.y -= .5;
+            uv = uv - Vec2f_make(.5);
 
             // adjusts the percentage on width be based on the aspect ratio (so that the screen will remain the same)
             // the height is keeped
