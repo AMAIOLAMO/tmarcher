@@ -1,4 +1,4 @@
-#include "../public/noise_utils.h"
+#include "../public/noise_util.h"
 
 static inline float in_out_cubic(float a, float b, float t) {
     return (b - a) * (3.0 - t * 2.0) * t * t + a;

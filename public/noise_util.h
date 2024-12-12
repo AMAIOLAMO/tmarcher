@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _NOISE_UTILS_H
-#define _NOISE_UTILS_H
+#ifndef _NOISE_UTIL_H
+#define _NOISE_UTIL_H
 
 #include "cxvec.h"
 
@@ -14,4 +14,4 @@ float perlin2f(float x, float y);
 float fBM_perlin2f(float x, float y, int octaves, float self_similarity = .5f);
 
 
-#endif // _NOISE_UTILS_H
+#endif // _NOISE_UTIL_H

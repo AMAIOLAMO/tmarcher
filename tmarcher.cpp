@@ -7,7 +7,6 @@
 #include <vector>
 #include <unistd.h>
 
-// TODO: replace this with a submodule from git instead of copying versions in a manual way
 #define CXVEC_IMPL_ONCE
 #include <cxvec.h>
 
@@ -15,42 +14,14 @@
 #include <term_util.h>
 #include <texture.h>
 #include <math_util.h>
-#include <noise_utils.h>
+#include <noise_util.h>
 #include <key_input.h>
 #include <rotors.h>
 #include <sdfable.h>
 #include <material.h>
 #include <primitives.h>
 #include <renderable.h>
-
-// __obsolete__
-/*char getc_from_brightness(float brightness) {*/
-/*    const char *characters = " .~;*=!O#$NM@";*/
-/*    const size_t len = std::strlen(characters);*/
-/**/
-/*    if(brightness > 1)*/
-/*        return characters[len - 1];*/
-/**/
-/*    if(brightness < 0)*/
-/*        return characters[0];*/
-/**/
-/*    return characters[(size_t)(brightness * (len - 1))];*/
-/*}*/
-
-using namespace std::chrono;
-
-typedef steady_clock::time_point time_point_t;
-
-steady_clock::time_point get_time_now() {
-    return steady_clock::now();
-}
-
-#define S2MS 1000.0
-
-double get_delta(steady_clock::time_point previous_time) {
-    return duration_cast<duration<double>>(get_time_now() - previous_time).count();
-}
-
+#include <time_util.h>
 
 //calculates the ray direction utilizing basic vector mathematics / analysis
 Vec3f ray_dir_from_uv(Camera *cam_ptr, Vec2f uv) {
@@ -102,7 +73,6 @@ Vec3f normal_from_pt_approx(SDFable *sdfable_ptr, Vec3f pt) {
 
     return Vec3f_norm(normal);
 }
-
 
 Vec3f normal_from_pt_backtrack(Vec3f rd, SDFable *sdfable_ptr, Vec3f pt) {
     Vec2f e = Vec2f{.001, 0.};
@@ -353,7 +323,7 @@ int main() {
     /*char *vbuffer = (char*)malloc(vbuffer_size);*/
     /*setvbuf(stdout, vbuffer, _IOFBF, vbuffer_size);*/
 
-    auto frame_time = get_time_now();
+    auto frame_time = time_mark_now();
 
     Camera cam{
         .pos     = {0, 10, -50},
@@ -431,10 +401,10 @@ int main() {
         double tot_stdout_time = 0;
         double tot_pixel_time = 0;
 
-        auto frame_render_time_mark = get_time_now();
+        auto frame_render_time_mark = time_mark_now();
 
         float delta = get_delta(frame_time);
-        frame_time = get_time_now();
+        frame_time = time_mark_now();
         u_time += delta;
 
         float rot_speed = 0.1;
@@ -508,7 +478,7 @@ int main() {
 
         key_input = EOF;
 
-        auto pixel_time_mark = get_time_now();
+        auto pixel_time_mark = time_mark_now();
 
         RenderInfo render_info{
             iwidth, iheight, &renderables, &u_time, &delta, &cam, frame_buffer
@@ -523,7 +493,7 @@ int main() {
 
         tot_pixel_time += get_delta(pixel_time_mark);
 
-        auto print_time_mark = get_time_now();
+        auto print_time_mark = time_mark_now();
 
         move_cursor(0, 0);
         for(int y = 0; y < iheight; y++) {

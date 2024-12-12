@@ -1,6 +1,6 @@
 #include "../public/primitives.h"
 #include "../public/math_util.h"
-#include "../public/noise_utils.h"
+#include "../public/noise_util.h"
 
 Plane::Plane(float y) : y(y) {}
 
