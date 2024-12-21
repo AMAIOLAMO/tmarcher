@@ -20,6 +20,7 @@ enum class FgColor {
 
 typedef unsigned char byte;
 
+// maybe extract this into another file
 struct ByteColor {
 public:
     ByteColor(byte r, byte g, byte b);
