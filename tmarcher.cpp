@@ -160,7 +160,6 @@ int main() {
     float rot_vertical = 0;
 
     Vec3f look_dir;
-    Versor rot = versor_identity();
 
     for(;;) {
         // PROFILE TIMERS
@@ -185,19 +184,25 @@ int main() {
         if(key_input == 'j')
             rot_vertical += rot_speed;
 
+        // we do not want to rotate exactly 180, because this will cause some calculations to divide by zero, which 
+        // is not what we want
+        // HACK: the above is prob a thing to account for, the one below is NOT a fix, but a HACK
         rot_vertical = clampf(rot_vertical, -PI * 0.33333f, PI * 0.33333f);
 
         look_dir = {
             0, 0, 1.0
         };
 
-        rot = versor_from_axis_rot({0, 1, 0}, rot_horizontal);
-        rot = versor_mul(versor_from_axis_rot(cam.right(), rot_vertical), rot);
+        Versor rot = versor_from_axis_rot({0, 1, 0}, rot_horizontal);
+
+        // do NOT use the cam.right() here, because it was not recalculated after rotation from the one on the top yet
+        Vec3f cam_right = versor_rot3f(rot, {1, 0, 0});
+
+        rot = versor_mul(versor_from_axis_rot(cam_right, rot_vertical), rot);
 
         look_dir = versor_rot3f(rot, look_dir);
 
         cam.look_at = cam.pos + look_dir;
-
 
         Vec2i input_strength{0, 0};
 
@@ -283,9 +288,6 @@ int main() {
         printf("\n============ INFO =============");
         printf("\n look dir: ");
         Vec3f_fprint(stdout, look_dir);
-
-        printf("\n rot versor: ");
-        versor_fprint(stdout, rot);
 
         printf("\n Rot horizontal: %f", rot_horizontal);
         printf("\n Rot vertical: %f", rot_vertical);
