@@ -1,3 +1,4 @@
+#include "term_displayer.h"
 #include <cfloat>
 #include <cstring>
 #include <assert.h>
@@ -16,7 +17,7 @@
 #include <math_util.h>
 #include <noise_util.h>
 #include <key_input.h>
-#include <rotors.h>
+#include <versor.h>
 #include <sdfable.h>
 #include <material.h>
 #include <primitives.h>
@@ -128,6 +129,7 @@ int main() {
     // actual infinite loop for rendering each frame
     clear_screen();
     move_cursor(0, 0);
+
     MarchOpts march_opts {
         300, 100, .003
     };
@@ -136,9 +138,10 @@ int main() {
         &march_opts
     };
 
-    ByteColor *frame_buffer = (ByteColor*)malloc(sizeof(ByteColor) * iwidth * iheight);
+    TerminalDisplayer displayer {
+    };
 
-    std::vector<std::thread> render_threads;
+    ByteColor *frame_buffer = (ByteColor*)malloc(sizeof(ByteColor) * iwidth * iheight);
 
     int key_input;
 
@@ -210,7 +213,8 @@ int main() {
             cam.forward() * input_strength.y * delta * 50.0f
         );
 
-        // SPHERE PHYSICS, TODO: make a physics state solver
+        // TODO: make a physics state solver, probably using simplectic euler
+        // probably also utilizing acceleration in this case
 
         if(key_input == 'g')
             sphere_velocity = sphere_velocity + cam.forward() * 100.0f;
@@ -232,6 +236,7 @@ int main() {
 
         key_input = EOF;
 
+        // rendering
         auto pixel_time_mark = time_mark_now();
 
         RenderInfo render_info{
@@ -240,27 +245,12 @@ int main() {
 
         renderer.render(&render_info, thread_count);
 
-        /*tmarcher_dispatch_render_frame(&render_info, &render_threads, thread_count);*/
-        /**/
-        /*// wait until render complete*/
-        /*for(std::thread &render_thread : render_threads)*/
-        /*    render_thread.join();*/
-        // frame render complete
-
         tot_pixel_time += get_delta(pixel_time_mark);
 
+        // display
         auto print_time_mark = time_mark_now();
 
-        move_cursor(0, 0);
-        for(int y = 0; y < iheight; y++) {
-            for(int x = 0; x < iwidth; x++) {
-                ByteColor color = frame_buffer[y * iwidth + x];
-                set_fg_color(color);
-
-                fwrite("██", sizeof("██"), 1, stdout);
-            }
-            fwrite("\n", sizeof(char), 1, stdout);
-        }
+        displayer.display(frame_buffer, iwidth, iheight);
 
         tot_stdout_time += get_delta(print_time_mark);
 
@@ -279,9 +269,11 @@ int main() {
             printf("\n\t> total stdout: %.2lfms (%.2lf%%)",   tot_stdout_time * S2MS,   (tot_stdout_time / frame_render_time_sec) * 100.0);
         printf("\n==============================");
 
-        printf("\n look dir: <%.2f, %.2f, %.2f>", look_dir.x, look_dir.y, look_dir.z);
+        printf("\n look dir: ");
+        Vec3f_fprint(stdout, look_dir);
 
-        printf("\n rot quat: <%.2f, %.2f, %.2f, %.2f>", rot.w, rot.i, rot.j, rot.k);
+        printf("\n rot versor: ");
+        versor_fprint(stdout, rot);
         printf("\n rot len: %.2f", versor_len(rot));
         printf("\n cam right:");
         Vec3f_fprint(stdout, cam.right());
@@ -295,6 +287,7 @@ int main() {
 
     // unload everything
     unload_texture(crate_texture);
+
 
     return 0;
 }

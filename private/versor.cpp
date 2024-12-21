@@ -1,4 +1,5 @@
-#include "../public/rotors.h"
+#include "../public/versor.h"
+#include <stdio.h>
 
 // represents some kind of rotation in 3D space
 Versor::Versor(float w, float i, float j, float k) : w(w), i(i), j(j), k(k) {
@@ -67,3 +68,6 @@ Vec3f versor_rot3f(Versor q, Vec3f v) {
     };
 }
 
+void versor_fprint(FILE *file, Versor v) {
+    fprintf(file, "<%.2f, %.2f, %.2f, .%2f>", v.w, v.i, v.j, v.k);
+}
