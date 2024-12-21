@@ -36,13 +36,6 @@ Vec3f ray_dir_from_uv(Camera *cam_ptr, Vec2f uv) {
     return Vec3f_norm(screen_point - cam_ptr->pos);
 }
 
-// NOT USED
-/*void swapf(float *x, float *y) {*/
-/*    float t = *x;*/
-/*    *x = *y;*/
-/*    *y = t;*/
-/*}*/
-
 Renderable* scene_pt_renderable(const std::vector<Renderable*> &renderables, Vec3f pt) {
     if(renderables.size() == 0)
         return nullptr;
