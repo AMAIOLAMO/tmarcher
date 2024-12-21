@@ -3,8 +3,9 @@
 #define _TERM_UTIL_H
 
 #include <string>
+#include <iostream>
 
-bool try_input_int(int *result_ptr, bool (*predicate)(int) = nullptr);
+void ask_int_or(const char *msg, int *result_ptr, int default_value, bool (*predicate)(int) = nullptr);
 
 void wait(int ms);
 

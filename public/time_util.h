@@ -14,6 +14,7 @@ steady_clock::time_point time_mark_now();
     #define S2MS 1000.0
 #endif
 
+// FIX: pretty ambiguous name for a function
 double get_delta(time_mark_t prev_time_mark);
 
 #endif // _TIME_UTIL_H

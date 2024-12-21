@@ -6,19 +6,20 @@
 #include <cstdarg>
 #include <assert.h>
 
-#ifdef _WIN32
-#include <conio.h>
-#endif
-
 #include "../public/math_util.h"
 
+void ask_int_or(const char *msg, int *result_ptr, int default_value, bool (*predicate)(int)) {
+    std::cout << msg << "[default -> " << default_value << "]: ";
 
-bool try_input_int(int *result_ptr, bool (*predicate)(int)) {
-    if(std::cin >> *result_ptr)
-        return predicate ? predicate(*result_ptr) : *result_ptr;
+    if(std::cin >> *result_ptr && (predicate == nullptr || predicate(*result_ptr)))
+        return;
     // else
 
-    return false;
+    // clean up the input
+    std::cin.clear();
+    std::cin.ignore();
+
+    *result_ptr = default_value;
 }
 
 
@@ -50,15 +51,8 @@ size_t fread_byte_color(FILE *file_ptr, byte *color_ptr) {
     return fread(color_ptr, sizeof(byte), 3, file_ptr);
 }
 
-
 void clear_screen() {
-#ifdef _WIN32
-    clrscr();
-#endif
-
-#ifdef linux
     puts("\033[2J\033[1;1H");
-#endif
 }
 
 void move_cursor(int row, int col) {

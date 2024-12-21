@@ -1,4 +1,3 @@
-#include "term_displayer.h"
 #include <cfloat>
 #include <cstring>
 #include <assert.h>
@@ -25,10 +24,24 @@
 #include <renderinfo.h>
 #include <march_renderer.h>
 #include <renderable.h>
+#include <term_displayer.h>
 
 #define DEFAULT_WIDTH 100
 #define DEFAULT_HEIGHT 50
 #define DEFAULT_THREAD_COUNT 1
+
+struct TimeMark {
+    TimeMark(double *time_add_ptr) :
+        time_add_ptr(time_add_ptr), start_mark(time_mark_now()) {
+    }
+
+    ~TimeMark() {
+        *time_add_ptr += get_delta(start_mark);
+    }
+
+    double *time_add_ptr;
+    time_mark_t start_mark;
+};
 
 void get_key_thread(int *key_ptr) {
     while(true) {
@@ -52,17 +65,16 @@ int main() {
     int thread_count;
 
     // fancy way of doing a simple thing, ugly. dont do this. (TODO)
-    printf("Please input width(width > 0, otherwise default to %d):", DEFAULT_WIDTH);
-    if(try_input_int(&iwidth, [](int v) { return v > 0; }) == false)
-        iwidth = DEFAULT_WIDTH; 
+    ask_int_or("Please input width(width > 0)",
+               &iwidth, DEFAULT_WIDTH, [](int v) { return v > 0; });
 
-    printf("Please input height(height > 0, otherwise default to %d):", DEFAULT_HEIGHT);
-    if(try_input_int(&iheight, [](int v) { return v > 0; }) == false)
-        iheight = DEFAULT_HEIGHT; 
+    ask_int_or("Please input height(height > 0)",
+               &iheight, DEFAULT_HEIGHT, [](int v) { return v > 0; });
 
-    printf("Please input thread count(thread count > 0, otherwise default to %d):", DEFAULT_THREAD_COUNT);
-    if(try_input_int(&thread_count, [](int v) { return v > 0; }) == false)
-        thread_count = DEFAULT_THREAD_COUNT; 
+    ask_int_or("Please input thread count(thread count > 0)",
+               &thread_count, DEFAULT_THREAD_COUNT, [](int v) { return v > 0; });
+
+    clear_screen();
 
     // setup virtual buffer for console
     // TODO: profile this before even using this, I am not sure how much this even affects performance
@@ -120,15 +132,12 @@ int main() {
         &plane, &terrain_material
     };
 
-
     renderables.emplace_back(&plane_renderable);
     renderables.emplace_back(&sphere_renderable);
 
     float u_time = 0;
 
     // actual infinite loop for rendering each frame
-    clear_screen();
-    move_cursor(0, 0);
 
     MarchOpts march_opts {
         300, 100, .003
@@ -141,7 +150,7 @@ int main() {
     TerminalDisplayer displayer {
     };
 
-    ByteColor *frame_buffer = (ByteColor*)malloc(sizeof(ByteColor) * iwidth * iheight);
+    ByteColor *frame_buffer = new ByteColor[iwidth * iheight];
 
     int key_input;
 
@@ -155,9 +164,6 @@ int main() {
 
     for(;;) {
         // PROFILE TIMERS
-        double tot_stdout_time = 0;
-        double tot_pixel_time = 0;
-
         auto frame_render_time_mark = time_mark_now();
 
         float delta = get_delta(frame_time);
@@ -235,31 +241,36 @@ int main() {
 
 
         key_input = EOF;
+        
+        
+
+        double tot_pixel_time = 0;
 
         // rendering
-        auto pixel_time_mark = time_mark_now();
+        {
+            TimeMark _{&tot_pixel_time};
 
-        RenderInfo render_info{
-            iwidth, iheight, &renderables, &u_time, &delta, &cam, frame_buffer
-        };
+            RenderInfo render_info{
+                iwidth, iheight, &renderables, &u_time, &delta, &cam, frame_buffer
+            };
 
-        renderer.render(&render_info, thread_count);
+            renderer.render(&render_info, thread_count);
+        }
 
-        tot_pixel_time += get_delta(pixel_time_mark);
+        double tot_stdout_time = 0;
 
         // display
-        auto print_time_mark = time_mark_now();
-
-        displayer.display(frame_buffer, iwidth, iheight);
-
-        tot_stdout_time += get_delta(print_time_mark);
+        {
+            TimeMark _{&tot_stdout_time};
+            displayer.display(frame_buffer, iwidth, iheight);
+        }
 
         reset_color();
 
         double frame_render_time_sec = get_delta(frame_render_time_mark);
 
         // TODO: create a class to abstract and automatically handle profiling and debug information
-        printf("============ PROFILE =============");
+        printf("\n============ PROFILE =============");
         printf("\nthread count: %d\n", thread_count);
         printf("\ntime: %.2fs", u_time);
         printf("\nFPS: %.2f", 1.0f / delta);
@@ -269,21 +280,25 @@ int main() {
             printf("\n\t> total stdout: %.2lfms (%.2lf%%)",   tot_stdout_time * S2MS,   (tot_stdout_time / frame_render_time_sec) * 100.0);
         printf("\n==============================");
 
+        printf("\n============ INFO =============");
         printf("\n look dir: ");
         Vec3f_fprint(stdout, look_dir);
 
         printf("\n rot versor: ");
         versor_fprint(stdout, rot);
-        printf("\n rot len: %.2f", versor_len(rot));
-        printf("\n cam right:");
-        Vec3f_fprint(stdout, cam.right());
+
         printf("\n Rot horizontal: %f", rot_horizontal);
         printf("\n Rot vertical: %f", rot_vertical);
-        printf("\n sphere velocity: <%.2f, %.2f, %.2f>", sphere_velocity.x, sphere_velocity.y, sphere_velocity.z);
+
+        printf("\n cam right:");
+        Vec3f_fprint(stdout, cam.right());
+
+        printf("\n sphere velocity: ");
+        Vec3f_fprint(stdout, sphere_velocity);
+        printf("\n==============================");
     }
 
-    /*free(vbuffer);*/
-    free(frame_buffer);
+    delete[] frame_buffer;
 
     // unload everything
     unload_texture(crate_texture);
